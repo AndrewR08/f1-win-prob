@@ -147,7 +147,7 @@ def main():
     yw_final = np.array(yw_new)
     print(yw_final)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_final, yw_final, test_size=0.2, random_state=8)
+    X_train, X_test, y_train, y_test = train_test_split(X_final, y_final, test_size=0.2, random_state=8)
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25)
 
@@ -168,15 +168,14 @@ def main():
 
         # include how to calculate accuracy in slides
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
-                      metrics=['accuracy','sparse_categorical_accuracy',
-                               keras.metrics.SparseTopKCategoricalAccuracy(k=3)])
+                      metrics=['accuracy', keras.metrics.SparseTopKCategoricalAccuracy(k=3)])
 
         # need to save model to h5 file for loading later
         model.fit(X_train, y_train, epochs=50)
 
         model.evaluate(X_test, y_test)
 
-        model.evaluate(X_val, y_val)
+        model.evaluate(X_final, yw_final)
 
     predict = True
     if predict:
@@ -198,6 +197,7 @@ def main():
         print(Xp)
         print(yp)
         print(yp_win)
+        print(len(yp_win))
 
         model.evaluate(Xp, yp)
 
@@ -206,16 +206,13 @@ def main():
         print("Validation evaluate: ")
         model.evaluate(X_val, y_val)
 
-        print(X_val[2])
-
         # need to load model from file
-        predicted = model.predict(X_val)
+        predicted = model.predict(Xp)
+        pred = np.argmax(predicted, axis=1)
 
-        print(predicted[2])
-        pred = np.argmax(predicted[2])
-
-        print(pred)
-        print(y_val[2])
+        print(pred[:10])
+        print(yp[:10])
+        print(yp_win[:10])
 
         """lap_n = 2
         print(Xp[lap_n])
