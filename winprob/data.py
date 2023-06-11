@@ -76,7 +76,9 @@ def get_race(year, track, fn):
     elif outliers[1] in df_laps['drivers'].unique():
         df_laps = df_laps[df_laps['drivers'] != outliers[1]]"""
 
-    df_laps.to_csv('data/race/' + fn, index=False)
+    #df_laps.to_csv('data/race/' + fn, index=False)
+    df_laps.to_csv('data/' + fn, index=False)
+
 
     return df_laps
 
@@ -105,7 +107,9 @@ def get_quali(year, track, fn):
         df = df[df['drivers'] != outliers[1]]"""
 
 
-    df.to_csv('data/quali/' + fn, index=False)
+    #df.to_csv('data/quali/' + fn, index=False)
+    df.to_csv('data/' + fn, index=False)
+
 
     return df
 
