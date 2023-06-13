@@ -82,14 +82,10 @@ def get_all_races(year, race_dict):
 
 
 def combine_csv(csvs_dir, out_dir):
-
     csv_files = os.listdir(csvs_dir)
-    print(csv_files)
-
     combined_df = pd.DataFrame()
 
     for file in csv_files:
-        print(file)
         df = pd.read_csv(csvs_dir+file)
         combined_df = combined_df.append(df, ignore_index=True)
 
@@ -98,33 +94,28 @@ def combine_csv(csvs_dir, out_dir):
 
 def main():
     cache(True)
-    year = 2022
+    year = 2023
     race_dict = get_schedule(year)
     print(race_dict)
 
-    skip_list = get_all_races(year, race_dict)
-    print(skip_list)
-    """race_list = list(race_dict.keys())
-    print(race_list)
-    skipped = [race_dict[x] for x in skip_list]
-    print(skipped)"""
+    #skip_list = get_all_races(year, race_dict)
 
-    races_dir = "data/race/"
-    quali_dir = "data/quali/"
+    races_dir = "data/" + str(year) + "/race/"
+    quali_dir = "data/" + str(year) + "/quali/"
     r_out_fn = "data/" + str(year) + "_races.csv"
     q_out_fn = "data/" + str(year) + "_quali.csv"
 
     #combine_csv(races_dir, r_out_fn)
     #combine_csv(quali_dir, q_out_fn)
 
-    """df = pd.read_csv(r_out_fn)
+    df = pd.read_csv(r_out_fn)
     print(df)
     q_df = pd.read_csv(q_out_fn)
 
     uniq_drivers = sorted(q_df['driver'].unique())
     print(uniq_drivers)
 
-    r_files = os.listdir(races_dir)
+    """r_files = os.listdir(races_dir)
     q_files = os.listdir(quali_dir)
 
     X_all = []
