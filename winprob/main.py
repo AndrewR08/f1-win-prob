@@ -72,13 +72,13 @@ def create_dataset(df, q_df):
 
 
 def get_all_races(year, race_dict):
-    skip_list = []
+    not_raced = []
     for t_num, t in race_dict.items():
         rf = str(year) + '_' + str(t) + '_R.csv'
         qf = str(year) + '_' + str(t) + '_Q.csv'
-        skip_list = get_race(year, t_num, skip_list, rf)
+        not_raced = get_race(year, t_num, not_raced, rf)
         get_quali(year, t_num, qf)
-    return skip_list
+    return not_raced
 
 
 def combine_csv(csvs_dir, out_dir):
@@ -92,7 +92,7 @@ def combine_csv(csvs_dir, out_dir):
     combined_df.to_csv(out_dir, index=False)
 
 
-def create_mult_dataset(races_dir, quali_dir):
+def create_mult_dataset(races_dir, quali_dir, skip_files):
     r_files = os.listdir(races_dir)
     q_files = os.listdir(quali_dir)
 
@@ -100,14 +100,20 @@ def create_mult_dataset(races_dir, quali_dir):
     y_all = []
     yw_all = []
     for rf in r_files:
-        df = pd.read_csv(races_dir + rf)
-        for qf in q_files:
-            q_df = pd.read_csv(quali_dir + qf)
+        if rf == skip_files[0]:
+            print(rf)
+        else:
+            df = pd.read_csv(races_dir + rf)
+            for qf in q_files:
+                if qf == skip_files[1]:
+                    print(qf)
+                else:
+                    q_df = pd.read_csv(quali_dir + qf)
 
-        X, y, y_win = create_dataset(df, q_df)
-        X_all.append(X)
-        y_all.append(y)
-        yw_all.append(y_win)
+            X, y, y_win = create_dataset(df, q_df)
+            X_all.append(X)
+            y_all.append(y)
+            yw_all.append(y_win)
 
     X_new = [item for sublist in X_all for item in sublist]
     X_final = np.array(X_new)
@@ -127,7 +133,11 @@ def main():
     race_dict = get_schedule(year)
     print(race_dict)
 
-    #skip_list = get_all_races(year, race_dict)
+    #placeholder for race to predict on (therefore not included in training)
+    skip_race = 'Australian_Grand_Prix'
+    skip_files = [str(year) + '_' + skip_race + '_R.csv', str(year) + '_' + skip_race + '_Q.csv']
+
+    not_raced = get_all_races(year, race_dict)
 
     races_dir = "data/" + str(year) + "/race/"
     quali_dir = "data/" + str(year) + "/quali/"
@@ -137,20 +147,31 @@ def main():
     #combine_csv(races_dir, r_out_fn)
     #combine_csv(quali_dir, q_out_fn)
 
-    X_final, y_final, yw_final = create_mult_dataset(races_dir, quali_dir)
+    X_final, y_final, yw_final = create_mult_dataset(races_dir, quali_dir, skip_files)
 
     X_train, X_test, y_train, y_test = train_test_split(X_final, y_final, test_size=0.2, random_state=8)
 
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25)
+    #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25)
 
     print(X_final.shape)
     print(y_final.shape)
     print(X_final)
 
-    train = False
+    train = True
+    model_name = str(year) + "races" + "_no_" + skip_race
     if train:
+        # define patience used for early stopping and initialize early stopping / best model saving
+        patience = 15
+        early_stopping = EarlyStopping(monitor='val_loss', patience=patience, verbose=1)
+
+        model_checkpoint = ModelCheckpoint('best_models/' + model_name + '.h5', monitor='val_loss', mode='min',
+                                           verbose=1,
+                                           save_best_only=True)
+
+        # clear previous model training data to ensure best model outcomes
         keras.backend.clear_session()
 
+        # define sequential model with linear Dense layer and softmax Dense output layer
         model = Sequential()
         model.add(Input(shape=(None, X_train.shape[1])))
         model.add(Dense(units=64, activation='linear'))
@@ -158,21 +179,30 @@ def main():
         model.add(Dense(units=X_train.shape[1]-1, activation='softmax'))
 
         # include how to calculate accuracy in slides
+        # keras.metrics.SparseTopKCategoricalAccuracy(k=3) <-- used for right answer within top 3 probs
+        # compile model using sparse cat crossentropy as loss function and adam as optimizer
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
-                      metrics=['accuracy', keras.metrics.SparseTopKCategoricalAccuracy(k=3)])
+                      metrics=['accuracy'])
 
-        # need to save model to h5 file for loading later
-        model.fit(X_train, y_train, epochs=50)
+        # fit model using training data, can use high epochs w/ early stopping
+        # - epochs: 50 (early stopping will override this)
+        # - batch_size: 8 (best fit from testing)
+        # - validation_dat: X_test, y_test (created w/ train test split)
+        # - callbacks: early stopping and model checkpoint saving
+        model.fit(X_train, y_train,
+                  epochs=50,
+                  batch_size=8,
+                  validation_data=[X_test, y_test],
+                  callbacks=[model_checkpoint, early_stopping])
 
-        model.evaluate(X_test, y_test)
-
+        #evaluate model when always predicting leader to win
         model.evaluate(X_final, yw_final)
 
     predict = False
     if predict:
         print("---- PREDICT ----")
         p_year = 2023
-        p_track = 'Saudi_Arabian_Grand_Prix'
+        p_track = 'Australian_Grand_Prix'
         pt_num = race_dict[p_track]
         p_rf = str(p_year) + "_" + p_track + "_R.csv"
         p_qf = str(p_year) + "_" + p_track + "_Q.csv"
@@ -193,9 +223,6 @@ def main():
         model.evaluate(Xp, yp)
 
         model.evaluate(Xp, yp_win)
-
-        print("Validation evaluate: ")
-        model.evaluate(X_val, y_val)
 
         # need to load model from file
         predicted = model.predict(Xp)
