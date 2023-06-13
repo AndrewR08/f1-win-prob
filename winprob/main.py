@@ -57,7 +57,6 @@ def create_dataset(df, q_df):
             x1[ind] = max_pos + 1
 
         Xs.append(x1)
-        #ys.append(x2.index(1))
         y_win.append(x2.index(1))
 
     for i in range(len(Xs)):
@@ -68,22 +67,18 @@ def create_dataset(df, q_df):
 
     X = Xs
     y = ys
-    #print("in create data: y = ", y, "\n", y_win)
-    """for row in X:
-        print(row)"""
-    #print(y)
 
     return X, y, y_win
 
 
-def get_all_races(year, tracks):
-    for t in tracks:
-        print(t)
+def get_all_races(year, race_dict):
+    skip_list = []
+    for t_num, t in race_dict.items():
         rf = str(year) + '_' + str(t) + '_R.csv'
         qf = str(year) + '_' + str(t) + '_Q.csv'
-        t_num = race_dict[t]
-        df1 = get_race(year, t_num, rf)
-        df2 = get_quali(year, t_num, qf)
+        skip_list = get_race(year, t_num, skip_list, rf)
+        get_quali(year, t_num, qf)
+    return skip_list
 
 
 def combine_csv(csvs_dir, out_dir):
@@ -102,10 +97,17 @@ def combine_csv(csvs_dir, out_dir):
 
 
 def main():
+    cache(True)
     year = 2022
-    tracks = list(race_dict.keys())
+    race_dict = get_schedule(year)
+    print(race_dict)
 
-    #get_all_races(year, tracks)
+    skip_list = get_all_races(year, race_dict)
+    print(skip_list)
+    """race_list = list(race_dict.keys())
+    print(race_list)
+    skipped = [race_dict[x] for x in skip_list]
+    print(skipped)"""
 
     races_dir = "data/race/"
     quali_dir = "data/quali/"
@@ -115,7 +117,7 @@ def main():
     #combine_csv(races_dir, r_out_fn)
     #combine_csv(quali_dir, q_out_fn)
 
-    df = pd.read_csv(r_out_fn)
+    """df = pd.read_csv(r_out_fn)
     print(df)
     q_df = pd.read_csv(q_out_fn)
 
@@ -154,9 +156,9 @@ def main():
     print(X_final.shape)
     print(y_final.shape)
     print(X_final)
-    print(y_final)
+    print(y_final)"""
 
-    train = True
+    train = False
     if train:
         keras.backend.clear_session()
 
@@ -177,7 +179,7 @@ def main():
 
         model.evaluate(X_final, yw_final)
 
-    predict = True
+    predict = False
     if predict:
         print("---- PREDICT ----")
         p_year = 2023
