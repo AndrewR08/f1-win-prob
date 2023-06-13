@@ -92,30 +92,8 @@ def combine_csv(csvs_dir, out_dir):
     combined_df.to_csv(out_dir, index=False)
 
 
-def main():
-    cache(True)
-    year = 2023
-    race_dict = get_schedule(year)
-    print(race_dict)
-
-    #skip_list = get_all_races(year, race_dict)
-
-    races_dir = "data/" + str(year) + "/race/"
-    quali_dir = "data/" + str(year) + "/quali/"
-    r_out_fn = "data/" + str(year) + "_races.csv"
-    q_out_fn = "data/" + str(year) + "_quali.csv"
-
-    #combine_csv(races_dir, r_out_fn)
-    #combine_csv(quali_dir, q_out_fn)
-
-    df = pd.read_csv(r_out_fn)
-    print(df)
-    q_df = pd.read_csv(q_out_fn)
-
-    uniq_drivers = sorted(q_df['driver'].unique())
-    print(uniq_drivers)
-
-    """r_files = os.listdir(races_dir)
+def create_mult_dataset(races_dir, quali_dir):
+    r_files = os.listdir(races_dir)
     q_files = os.listdir(quali_dir)
 
     X_all = []
@@ -138,7 +116,28 @@ def main():
 
     yw_new = [item for sublist in yw_all for item in sublist]
     yw_final = np.array(yw_new)
-    print(yw_final)
+
+    return X_final, y_final, yw_final
+
+
+def main():
+    cache(True)
+
+    year = 2023
+    race_dict = get_schedule(year)
+    print(race_dict)
+
+    #skip_list = get_all_races(year, race_dict)
+
+    races_dir = "data/" + str(year) + "/race/"
+    quali_dir = "data/" + str(year) + "/quali/"
+    r_out_fn = "data/" + str(year) + "_races.csv"
+    q_out_fn = "data/" + str(year) + "_quali.csv"
+
+    #combine_csv(races_dir, r_out_fn)
+    #combine_csv(quali_dir, q_out_fn)
+
+    X_final, y_final, yw_final = create_mult_dataset(races_dir, quali_dir)
 
     X_train, X_test, y_train, y_test = train_test_split(X_final, y_final, test_size=0.2, random_state=8)
 
@@ -147,7 +146,6 @@ def main():
     print(X_final.shape)
     print(y_final.shape)
     print(X_final)
-    print(y_final)"""
 
     train = False
     if train:
