@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from datetime import datetime
+import os
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -16,15 +17,6 @@ lap_dict = {'Abu_Dhabi_Grand_Prix': 5554, 'Australian_Grand_Prix': 5303,
             'Mexico_City_Grand_Prix': 4304, 'Miami_Grand_Prix': 5410, 'Monaco_Grand_Prix': 3337,
             'Saudi_Arabian_Grand_Prix': 6175, 'Singapore_Grand_Prix': 5063,
             'Spanish_Grand_Prix': 4655, 'United_States_Grand_Prix': 5513}
-
-"""race_dict = {'Abu_Dhabi_Grand_Prix': 22, 'Australian_Grand_Prix': 3,
-             'Austrian_Grand_Prix': 11, 'Azerbaijan_Grand_Prix': 8, 'Bahrain_Grand_Prix': 1, 'Belgian_Grand_Prix': 14,
-             'Brazilian_Grand_Prix': 21, 'British_Grand_Prix': 10, 'Canadian_Grand_Prix': 9,
-             'Dutch_Grand_Prix': 15, 'Emilia_Romagna_Grand_Prix': 4, 'French_Grand_Prix': 12,
-             'Hungarian_Grand_Prix': 13, 'Italian_Grand_Prix': 16, 'Japanese_Grand_Prix': 18,
-             'Mexico_City_Grand_Prix': 20, 'Miami_Grand_Prix': 5, 'Monaco_Grand_Prix': 7,
-             'Saudi_Arabian_Grand_Prix': 2, 'Singapore_Grand_Prix': 17,
-             'Spanish_Grand_Prix': 6, 'United_States_Grand_Prix': 19}"""
 
 drivers_dict = {1: 'VER', 3: 'RIC', 4: 'NOR', 5: 'VET', 6: 'LAT', 10: 'GAS', 11: 'PER', 14: 'ALO', 16: 'LEC', 18: 'STR',
                 20: 'MAG', 22: 'TSU', 23: 'ALB', 24: 'ZHO', 31: 'OCO', 44: 'HAM', 47: 'MSC', 55: 'SAI', 63: 'RUS',
@@ -58,7 +50,7 @@ def get_schedule(year):
     return circuits
 
 
-def get_race(year, track, skip_list, fn):
+def get_race(year, track, fn, skip_list):
     raw_data = pd.read_json(f'http://ergast.com/api/f1/' + str(year) + '/' + str(track) + '/laps/0.json?limit=1000')
 
     try:
@@ -112,12 +104,124 @@ def get_quali(year, track, fn):
         pass
 
 
-def plot_laps(X):
-    lap_nums = [(i + 1) for i in range(len(X))]
-    # print(lap_nums)
-    plt.plot(lap_nums, X)
-    plt.xticks(np.arange(min(lap_nums), max(lap_nums) + 1, 5.0))
-    plt.xlabel("Lap Number")
-    plt.ylabel("Lap Time (s)")
-    plt.title("")
-    plt.show()
+def create_dataset(df, q_df):
+    drivers = q_df['driver'].unique()
+    sorted_drivers = sorted(drivers)
+    #print("in create dataset: ", sorted_drivers)
+
+    laps = df['lap'].max()
+
+    Xs = []
+    ys = []
+    y_win = []
+    # laps = 1
+    for i in range(0, laps + 1):
+        x1 = [None] * (len(sorted_drivers)+1)
+        """if i == 0:
+            drivers = sorted(q_df['driver'].tolist())
+        else:
+            drivers = sorted(df['driver'].loc[df['lap'] == (i + 1)].tolist())
+
+        if len(drivers) < len(sorted_drivers):
+            missing = sorted(list(set(sorted_drivers) - set(drivers)))"""
+
+        x1[0] = laps - i
+        for d in sorted_drivers:
+            if i == 0:
+                pos = q_df['position'].loc[q_df['driver'] == d].values
+                d_ind = sorted_drivers.index(d) + 1
+                #print(d_ind)
+                x1[d_ind] = pos[0]
+            else:
+                try:
+                    pos = df['position'].loc[(df['lap'] == i) & (df['driver'] == d)].values
+                    d_ind = sorted_drivers.index(d) + 1
+                    #print(d_ind)
+                    x1[d_ind] = pos[0]
+                except:
+                    pass
+
+        x2 = x1.copy()
+        x2.pop(0)
+
+        # will fill None with position number
+        indices = [i for i, x in enumerate(x1) if x is None]
+        for ind in indices:
+            max_pos = np.nanmax(np.array(x2, dtype=np.float64)).astype(int)
+            x2[ind - 1] = max_pos + 1
+            x1[ind] = max_pos + 1
+
+        Xs.append(x1)
+        y_win.append(x2.index(1))
+
+    for i in range(len(Xs)):
+        ys.append(Xs[-1].index(1)-1)
+
+    # X = np.array(Xs)  # , dtype=np.float64)
+    # y = np.array(ys)  # , dtype=np.float64)
+
+    X = Xs
+    y = ys
+
+    return X, y, y_win
+
+
+def get_all_races(year, race_dict):
+    not_raced = []
+    for t_num, t in race_dict.items():
+        rf = str(year) + '_' + str(t) + '_R.csv'
+        qf = str(year) + '_' + str(t) + '_Q.csv'
+        not_raced = get_race(year, t_num, not_raced, rf)
+        get_quali(year, t_num, qf)
+    return not_raced
+
+
+def combine_csv(csvs_dir, out_dir):
+    csv_files = os.listdir(csvs_dir)
+    combined_df = pd.DataFrame()
+
+    for file in csv_files:
+        df = pd.read_csv(csvs_dir+file)
+        combined_df = combined_df.append(df, ignore_index=True)
+
+    combined_df.to_csv(out_dir, index=False)
+
+
+def create_mult_dataset(races_dir, quali_dir, skip_files=None):
+    if skip_files is None:
+        skip_files = ['', '']
+    else:
+        pass
+
+    r_files = os.listdir(races_dir)
+    q_files = os.listdir(quali_dir)
+
+    X_all = []
+    y_all = []
+    yw_all = []
+    for rf in r_files:
+        if rf == skip_files[0]:
+            pass
+        else:
+            df = pd.read_csv(races_dir + rf)
+            for qf in q_files:
+                if qf == skip_files[1]:
+                    pass
+                else:
+                    q_df = pd.read_csv(quali_dir + qf)
+
+            X, y, y_win = create_dataset(df, q_df)
+            X_all.append(X)
+            y_all.append(y)
+            yw_all.append(y_win)
+
+    X_new = [item for sublist in X_all for item in sublist]
+    X_final = np.array(X_new)
+    y_new = [item for sublist in y_all for item in sublist]
+    y_final = np.array(y_new)
+
+    yw_new = [item for sublist in yw_all for item in sublist]
+    yw_final = np.array(yw_new)
+
+    return X_final, y_final, yw_final
+
