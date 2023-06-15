@@ -1,4 +1,5 @@
 import fastf1 as ff1
+from fastf1 import plotting
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,7 +47,7 @@ def get_schedule(year):
     circuits = schedule.EventName
     circuits = circuits.apply(format_circuits).reset_index(drop=True)
     circuits = circuits.to_dict()
-    circuits = {k+1: v for k, v in circuits.items()}
+    circuits = {k + 1: v for k, v in circuits.items()}
     return circuits
 
 
@@ -107,7 +108,7 @@ def get_quali(year, track, fn):
 def create_dataset(df, q_df):
     drivers = q_df['driver'].unique()
     sorted_drivers = sorted(drivers)
-    #print("in create dataset: ", sorted_drivers)
+    # print("in create dataset: ", sorted_drivers)
 
     laps = df['lap'].max()
 
@@ -116,7 +117,7 @@ def create_dataset(df, q_df):
     y_win = []
     # laps = 1
     for i in range(0, laps + 1):
-        x1 = [None] * (len(sorted_drivers)+1)
+        x1 = [None] * (len(sorted_drivers) + 1)
         """if i == 0:
             drivers = sorted(q_df['driver'].tolist())
         else:
@@ -130,13 +131,13 @@ def create_dataset(df, q_df):
             if i == 0:
                 pos = q_df['position'].loc[q_df['driver'] == d].values
                 d_ind = sorted_drivers.index(d) + 1
-                #print(d_ind)
+                # print(d_ind)
                 x1[d_ind] = pos[0]
             else:
                 try:
                     pos = df['position'].loc[(df['lap'] == i) & (df['driver'] == d)].values
                     d_ind = sorted_drivers.index(d) + 1
-                    #print(d_ind)
+                    # print(d_ind)
                     x1[d_ind] = pos[0]
                 except:
                     pass
@@ -155,7 +156,7 @@ def create_dataset(df, q_df):
         y_win.append(x2.index(1))
 
     for i in range(len(Xs)):
-        ys.append(Xs[-1].index(1)-1)
+        ys.append(Xs[-1].index(1) - 1)
 
     # X = np.array(Xs)  # , dtype=np.float64)
     # y = np.array(ys)  # , dtype=np.float64)
@@ -181,7 +182,7 @@ def combine_csv(csvs_dir, out_dir):
     combined_df = pd.DataFrame()
 
     for file in csv_files:
-        df = pd.read_csv(csvs_dir+file)
+        df = pd.read_csv(csvs_dir + file)
         combined_df = combined_df.append(df, ignore_index=True)
 
     combined_df.to_csv(out_dir, index=False)
@@ -225,3 +226,55 @@ def create_mult_dataset(races_dir, quali_dir, skip_files=None):
 
     return X_final, y_final, yw_final
 
+
+def plot_positions(year, track_name, drivers=None):
+    ff1.plotting.setup_mpl()
+
+    r_file = 'data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    df = pd.read_csv(r_file)
+    qdf = pd.read_csv(q_file)
+
+    # create a matplotlib figure
+    fig = plt.figure()
+    ax = fig.add_subplot()
+
+    if drivers is None or drivers == []:
+        drivers = list(qdf.driver.unique())
+        print(drivers)
+
+    # x = [0] * len(qdf)
+    # y = qdf['position'].tolist()
+
+    min_y = []
+    max_y = []
+    for d in drivers:
+        x = [0]
+        y = qdf['position'].loc[qdf['driver'] == d].tolist()
+        x = x + df['lap'].loc[df['driver'] == d].tolist()
+        y = y + df['position'].loc[df['driver'] == d].tolist()
+        if len(x) == 0 and len(y) == 0:
+            #need to fix drivers who crash on lap 1 not showing up -- single point
+            #can compare quali vs race drivers list to get drivers who crash on lap 1 and then skip those in initial
+            # plot, append to skip list and then go through skip list after others have been plotted (maybe?)
+            ax.scatter(x, y, marker='s', color=plotting.driver_color(d), label=d)
+        else:
+            ax.plot(x, y, color=plotting.driver_color(d), label=d)
+        min_y.append(min(y))
+        max_y.append(max(y))
+
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    plt.xticks(np.arange(min(x), max(x) + 5, 5.0))
+    plt.yticks(np.arange(min(min_y), max(max_y) + 1, 1.0))
+    plt.gca().invert_yaxis()
+    #plt.legend()
+    plt.title(str(year) + " " + track_name.replace("_", " ") + ' Driver Positions')
+    plt.xlabel("Lap")
+    plt.ylabel("Position")
+    plt.show()

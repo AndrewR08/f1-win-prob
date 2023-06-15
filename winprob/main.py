@@ -96,7 +96,7 @@ def main():
         best_model.evaluate(X_test, y_test)
         best_model.evaluate(X_final, yw_final)
 
-    predict = True
+    predict = False
     if predict:
         print("---- PREDICT ----")
         p_year = 2022
@@ -125,6 +125,8 @@ def main():
             predicted = pred_model.predict(Xp[:pred_laps])
             pred = np.argmax(predicted, axis=1)
             print(pred)
+
+    plot_positions(2023, 'Australian_Grand_Prix', drivers=[])
 
 
 if __name__ == '__main__':
