@@ -236,7 +236,7 @@ def plot_positions(year, track_name, drivers=None):
     qdf = pd.read_csv(q_file)
 
     # create a matplotlib figure
-    fig = plt.figure()
+    fig = plt.figure(figsize=[8, 6], dpi=200)
     ax = fig.add_subplot()
 
     if drivers is None or drivers == []:
@@ -274,7 +274,8 @@ def plot_positions(year, track_name, drivers=None):
     plt.yticks(np.arange(min(min_y), max(max_y) + 1, 1.0))
     plt.gca().invert_yaxis()
     #plt.legend()
-    plt.title(str(year) + " " + track_name.replace("_", " ") + ' Driver Positions')
+    plt.title(str(year) + " " + track_name.replace("_", " "))
     plt.xlabel("Lap")
     plt.ylabel("Position")
-    plt.show()
+    plt.savefig('images/' + str(year) + "_" + track_name + "_Positions1.png")
+    #plt.show()
