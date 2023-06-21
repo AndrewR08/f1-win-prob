@@ -241,10 +241,6 @@ def plot_positions(year, track_name, drivers=None):
 
     if drivers is None or drivers == []:
         drivers = list(qdf.driver.unique())
-        print(drivers)
-
-    # x = [0] * len(qdf)
-    # y = qdf['position'].tolist()
 
     min_y = []
     max_y = []
@@ -254,8 +250,8 @@ def plot_positions(year, track_name, drivers=None):
         x = x + df['lap'].loc[df['driver'] == d].tolist()
         y = y + df['position'].loc[df['driver'] == d].tolist()
         if len(x) == 0 and len(y) == 0:
-            #need to fix drivers who crash on lap 1 not showing up -- single point
-            #can compare quali vs race drivers list to get drivers who crash on lap 1 and then skip those in initial
+            # need to fix drivers who crash on lap 1 not showing up -- single point
+            # can compare quali vs race drivers list to get drivers who crash on lap 1 and then skip those in initial
             # plot, append to skip list and then go through skip list after others have been plotted (maybe?)
             ax.scatter(x, y, marker='s', color=plotting.driver_color(d), label=d)
         else:
@@ -273,9 +269,95 @@ def plot_positions(year, track_name, drivers=None):
     plt.xticks(np.arange(min(x), max(x) + 5, 5.0))
     plt.yticks(np.arange(min(min_y), max(max_y) + 1, 1.0))
     plt.gca().invert_yaxis()
-    #plt.legend()
     plt.title(str(year) + " " + track_name.replace("_", " "))
     plt.xlabel("Lap")
     plt.ylabel("Position")
-    plt.savefig('images/' + str(year) + "_" + track_name + "_Positions1.png")
-    #plt.show()
+    plt.savefig('images/' + str(year) + "_" + track_name + "_Positions.png")
+
+
+def plot_single_prob(year, track_name, predictions, prob_lap):
+    ff1.plotting.setup_mpl()
+
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    qdf = pd.read_csv(q_file)
+
+    # create a matplotlib figure
+    fig = plt.figure(figsize=[8, 6], dpi=200)
+    ax = fig.add_subplot()
+
+    drivers = sorted(list(qdf.driver.unique()))
+
+    if prob_lap == -1:
+        prob_lap = len(predictions)-1
+    prob_lap = prob_lap - 1
+    probs = predictions[prob_lap]
+    for i in range(len(drivers)):
+        d = drivers[i]
+        if year == 2022:
+            if d == 'alonso':
+                d = 'gasly'
+            elif d == 'gasly':
+                d = 'de_vries'
+            elif d == 'latifi':
+                d = 'sargeant'
+            elif d == 'mick_schumacher':
+                d = 'hulkenberg'
+            elif d == 'ricciardo':
+                d = 'piastri'
+            elif d == 'vettel':
+                d = 'alonso'
+
+        p = probs[i]
+        ax.bar(i, p, color=plotting.driver_color(d))
+
+    plt.title(str(year) + " " + track_name.replace("_", " ") + " Lap " + str(prob_lap))
+    plt.xticks(range(len(drivers)), drivers, rotation='vertical')
+    plt.xlabel("Driver")
+    plt.ylabel("Win Probability")
+    #plt.ylim(0, 0.5)
+    plt.tight_layout()
+    plt.savefig('images/' + str(year) + "_" + track_name + "_Prediction_L" + str(prob_lap) + ".png")
+
+
+def plot_probs(year, track_name, predictions):
+    ff1.plotting.setup_mpl()
+
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    qdf = pd.read_csv(q_file)
+
+    # create a matplotlib figure
+    fig = plt.figure(figsize=[10, 8], dpi=150)
+    ax = fig.add_subplot()
+
+    drivers = sorted(list(qdf.driver.unique()))
+
+    predictions = np.transpose(predictions)
+    for i in range(len(predictions)):
+        d = drivers[i]
+        if year == 2022:
+            if d == 'alonso':
+                d = 'gasly'
+            elif d == 'gasly':
+                d = 'de_vries'
+            elif d == 'latifi':
+                d = 'sargeant'
+            elif d == 'mick_schumacher':
+                d = 'hulkenberg'
+            elif d == 'ricciardo':
+                d = 'piastri'
+            elif d == 'vettel':
+                d = 'alonso'
+
+        ax.plot(np.arange(len(predictions[i])), predictions[i], "-o", color=plotting.driver_color(d), label=d)
+
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    plt.title(str(year) + " " + track_name.replace("_", " "))
+    plt.xlabel("Lap Number")
+    plt.ylabel("Win Probability")
+    plt.savefig('images/' + str(year) + "_" + track_name + "_Predictions.png")

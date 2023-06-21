@@ -21,12 +21,11 @@ def load(file_path):
 def main():
     cache(True)
 
-    year = 2022
+    year = 2023
     race_dict = get_schedule(year)
     print(race_dict)
 
-    #placeholder for race to predict on (therefore not included in training)
-    skip_race = 'Spanish_Grand_Prix'
+    skip_race = 'Bahrain_Grand_Prix'
     skip_files = [str(year) + '_' + skip_race + '_R.csv', str(year) + '_' + skip_race + '_Q.csv']
 
     #not_raced = get_all_races(year, race_dict)
@@ -43,13 +42,12 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(X_final, y_final, test_size=0.2, random_state=8)
 
-    #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25)
-
     print(X_final.shape)
     print(y_final.shape)
     print(X_final)
+    print(X_train.shape)
 
-    train = False
+    train = True
     model_name = str(year) + "races" + "_no_" + skip_race
     if train:
         # define patience used for early stopping and initialize early stopping / best model saving
@@ -66,9 +64,9 @@ def main():
         # define sequential model with linear Dense layer and softmax Dense output layer
         model = Sequential()
         model.add(Input(shape=(None, X_train.shape[1])))
-        model.add(Dense(units=64, activation='linear'))
         model.add(Dense(units=16, activation='linear'))
-        model.add(Dense(units=2, activation='linear'))
+        model.add(Dense(units=16, activation='linear'))
+        #model.add(Dense(units=2, activation='linear'))
         model.add(Dense(units=X_train.shape[1]-1, activation='softmax'))
 
         # include how to calculate accuracy in slides
@@ -96,11 +94,11 @@ def main():
         best_model.evaluate(X_test, y_test)
         best_model.evaluate(X_final, yw_final)
 
-    predict = False
+    predict = True
     if predict:
         print("---- PREDICT ----")
-        p_year = 2022
-        p_track = 'Spanish_Grand_Prix'
+        p_year = year
+        p_track = skip_race
 
         p_df = pd.read_csv('data/'+str(p_year)+'/race/'+str(p_year)+'_'+p_track+'_R.csv')
         p_qdf = pd.read_csv('data/'+str(p_year)+'/quali/'+str(p_year)+'_'+p_track+'_Q.csv')
@@ -111,10 +109,10 @@ def main():
         print(yp_win[0])
 
         # need to load model from file
-        pred_model = load_model('best_models/2022races_no_'+p_track+'.h5')
+        pred_model = load_model('best_models/' + str(p_year) + 'races_no_'+p_track+'.h5')
 
-        #number of laps to predict with -- 1 = quali data --> len() = full race
-        pred_laps = 10
+        # number of laps to predict with -- 1 = quali data --> len() = full race
+        pred_laps = 15
         # -- could add specific lap to predict on (ex. lap 25/50 instead of full first 25 laps)
         if pred_laps > len(Xp):
             print("ERROR - input laps must be less than ", len(Xp))
@@ -126,7 +124,10 @@ def main():
             pred = np.argmax(predicted, axis=1)
             print(pred)
 
-    plot_positions(2023, 'Australian_Grand_Prix', drivers=[])
+    plot_positions(p_year, p_track, drivers=[])
+
+    plot_single_prob(p_year, p_track, predicted, prob_lap=8)
+    plot_probs(p_year, p_track, predicted)
 
 
 if __name__ == '__main__':
