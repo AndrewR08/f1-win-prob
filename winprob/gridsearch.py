@@ -30,7 +30,6 @@ def run(layers, loss_function, optimizer, batch_size, epochs, patience=15):
     keras.backend.clear_session()
 
     # Debug variables
-    #print(x.activation._keras_api_names[0] for x in layers)
     layers_str = "[" + "|".join(str(str(x.units) + " " + x._keras_api_names[0][13:]) for x in layers) + "]"
     loss_function_name = loss_function.name
     print(f"hyper-parameters:\n\t" +
