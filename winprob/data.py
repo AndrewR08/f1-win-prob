@@ -67,12 +67,6 @@ def get_race(year, track, fn, skip_list):
                         datetime.strptime(row, '%M:%S.%f').minute * 60)
         df_laps = df_laps.astype({'lap': 'int32', 'position': 'int32'})
 
-        """outliers = ['de_vries', 'hulkenberg']
-        if outliers[0] in df_laps['drivers'].unique():
-            df_laps = df_laps[df_laps['drivers'] != outliers[0]]
-        elif outliers[1] in df_laps['drivers'].unique():
-            df_laps = df_laps[df_laps['drivers'] != outliers[1]]"""
-
         df_laps.to_csv('data/' + str(year) + '/race/' + fn, index=False)
     except KeyError:
         skip_list.append(track)
@@ -157,9 +151,6 @@ def create_dataset(df, q_df):
 
     for i in range(len(Xs)):
         ys.append(Xs[-1].index(1) - 1)
-
-    # X = np.array(Xs)  # , dtype=np.float64)
-    # y = np.array(ys)  # , dtype=np.float64)
 
     X = Xs
     y = ys
@@ -288,7 +279,7 @@ def plot_single_prob(year, track_name, predictions, prob_lap):
     drivers = sorted(list(qdf.driver.unique()))
 
     if prob_lap == -1:
-        prob_lap = len(predictions)-1
+        prob_lap = len(predictions) - 1
     prob_lap = prob_lap - 1
     probs = predictions[prob_lap]
     for i in range(len(drivers)):
@@ -314,7 +305,7 @@ def plot_single_prob(year, track_name, predictions, prob_lap):
     plt.xticks(range(len(drivers)), drivers, rotation='vertical')
     plt.xlabel("Driver")
     plt.ylabel("Win Probability")
-    #plt.ylim(0, 0.5)
+    # plt.ylim(0, 0.5)
     plt.tight_layout()
     plt.savefig('images/' + str(year) + "_" + track_name + "_Prediction_L" + str(prob_lap) + ".png")
 
@@ -361,3 +352,4 @@ def plot_probs(year, track_name, predictions):
     plt.xlabel("Lap Number")
     plt.ylabel("Win Probability")
     plt.savefig('images/' + str(year) + "_" + track_name + "_Predictions.png")
+    plt.show()

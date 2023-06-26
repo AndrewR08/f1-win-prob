@@ -1,34 +1,48 @@
-from main import load
 from data import *
+from train import load
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 def predict(year, skip_race):
-    print("---- PREDICT ----")
-    p_year = year
-    p_track = skip_race
+    # load race and qualifying csv to create dataset
+    p_df = pd.read_csv('data/' + str(year) + '/race/' + str(year) + '_' + skip_race + '_R.csv')
+    p_qdf = pd.read_csv('data/' + str(year) + '/quali/' + str(year) + '_' + skip_race + '_Q.csv')
 
-    p_df = pd.read_csv('data/' + str(p_year) + '/race/' + str(p_year) + '_' + p_track + '_R.csv')
-    p_qdf = pd.read_csv('data/' + str(p_year) + '/quali/' + str(p_year) + '_' + p_track + '_Q.csv')
-
+    # use data.py method to create dataset
     Xp, yp, yp_win = create_dataset(p_df, p_qdf)
-    print(Xp[0])
-    print(yp[0])
-    print(yp_win[0])
 
     # load model from file
-    pred_model = load('best_models/' + str(p_year) + 'races_no_' + p_track + '.h5')
+    pred_model = load('best_models/' + str(year) + 'races_no_' + skip_race + '.h5')
 
-    # number of laps to predict with -- 1 = quali data --> len() = full race
-    pred_laps = 15
-    # -- could add specific lap to predict on (ex. lap 25/50 instead of full first 25 laps)
-    if pred_laps > len(Xp):
-        print("ERROR - input laps must be less than ", len(Xp))
+    # number of laps to predict with
+    # - pred_laps[0] = start lap
+    # - pred_laps[1] = end lap
+    pred_laps = [0, len(Xp)]
+
+    # get user input
+    pred_laps[0] = int(input("Enter prediction start lap (1-" + str(len(Xp)) + "): "))
+    pred_laps[1] = int(input("Enter prediction end lap (1-" + str(len(Xp)) + "): "))
+
+    if pred_laps[0] < 0:
+        print("ERROR - start input out of range, using 1")
+        pred_laps[0] = 1
+    elif pred_laps[1] > len(Xp):
+        print("ERROR - end input out of range, using ", len(Xp))
+        pred_laps[1] = len(Xp)
     else:
-        pred_model.evaluate([Xp[:pred_laps]], [yp[:pred_laps]])
-        pred_model.evaluate([Xp[:pred_laps]], [yp_win[:pred_laps]])
+        # ability to print out trained/base model evaluations
+        """
+        print("\nTrained Model: ")
+        pred_model.evaluate([Xp[pred_laps[0]-1:pred_laps[1]]], [yp[pred_laps[0]-1:pred_laps[1]]])
+        print("Base Model: ")
+        pred_model.evaluate([Xp[pred_laps[0]-1:pred_laps[1]]], [yp_win[pred_laps[0]-1:pred_laps[1]]])
+        """
 
-        predicted = pred_model.predict(Xp[:pred_laps])
+        # call model.predict to return win probabilities for the number of input laps
+        predicted = pred_model.predict(Xp[pred_laps[0]-1:pred_laps[1]])
+
+        # array to show which driver class was predicted to win at each lap
         pred = np.argmax(predicted, axis=1)
-        print(pred)
 
         return predicted
