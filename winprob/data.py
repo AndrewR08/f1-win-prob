@@ -353,3 +353,64 @@ def plot_probs(year, track_name, predictions):
     plt.ylabel("Win Probability")
     plt.savefig('images/' + str(year) + "_" + track_name + "_Predictions.png")
     plt.show()
+
+
+def plot_pos_and_probs(year, track_name, X_final, predictions):
+    ff1.plotting.setup_mpl()
+
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    qdf = pd.read_csv(q_file)
+
+    # Remove the first column
+    positions = np.transpose(X_final[:len(predictions), 1:])
+
+    # create a matplotlib figure
+    fig, ax = plt.subplots(1, 2, figsize=[20, 6], dpi=150)
+
+    drivers = sorted(list(qdf.driver.unique()))
+
+    predictions = np.transpose(predictions)
+
+    min_y, max_y = [], []
+    for i in range(len(predictions)):
+        d = drivers[i]
+        if year == 2022:
+            if d == 'alonso':
+                d = 'gasly'
+            elif d == 'gasly':
+                d = 'de_vries'
+            elif d == 'latifi':
+                d = 'sargeant'
+            elif d == 'mick_schumacher':
+                d = 'hulkenberg'
+            elif d == 'ricciardo':
+                d = 'piastri'
+            elif d == 'vettel':
+                d = 'alonso'
+
+        # plot poition by lap
+        ax[0].plot(np.arange(len(positions[i])), positions[i], color=plotting.driver_color(d), label=d)
+        min_y.append(min(positions[i]))
+        max_y.append(max(positions[i]))
+
+        # plot predicted probabilities by lap
+        ax[1].plot(np.arange(len(predictions[i])), predictions[i], "-o", color=plotting.driver_color(d), label=d)
+
+    ax[0].set_yticks(np.arange(min(min_y), max(max_y) + 1, 1.0))
+    ax[0].invert_yaxis()
+    ax[0].set_xlabel("Lap")
+    ax[0].set_ylabel("Position")
+    ax[0].set_title("Driver Position per Lap")
+
+    ax[1].set_xlabel("Lap")
+    ax[1].set_ylabel("Probability ")
+    ax[1].set_title("Win Probability per Lap")
+
+    # Put a legend to the right of the current axis
+    box = ax[1].get_position()
+    ax[1].set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    fig.suptitle(str(year) + " " + track_name.replace("_", " "))
+    plt.savefig('images/' + str(year) + "_" + track_name + "_Probabilities_Predictions.png")
+    plt.show()

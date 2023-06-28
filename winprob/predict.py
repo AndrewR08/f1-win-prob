@@ -41,6 +41,8 @@ def predict(year, skip_race):
 
         # call model.predict to return win probabilities for the number of input laps
         predicted = pred_model.predict(Xp[pred_laps[0]-1:pred_laps[1]])
+        pred_filepath = 'predictions/' + str(year) + '/' + str(skip_race) + '.npy'
+        np.save(pred_filepath, predicted)
 
         # array to show which driver class was predicted to win at each lap
         pred = np.argmax(predicted, axis=1)

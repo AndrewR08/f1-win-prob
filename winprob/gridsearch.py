@@ -76,9 +76,9 @@ def run(layers, loss_function, optimizer, batch_size, epochs, patience=15):
     val_loss = model.evaluate(X_test, y_test, verbose=0)
     print("----val loss-----", val_loss)
 
-    # Write result to results csv
+    # Write result to gs_results csv
     csv_result = f"{layers_str},{loss_function_name},{batch_size},{epochs},{number_of_epochs_ran},{val_loss}\n"
-    file1 = open('results/results_gs.csv', 'a+')
+    file1 = open('gs_results/results_gs1.csv', 'a+')
     file1.write(csv_result)
     file1.close()
     print("Results appended.\n")
@@ -128,7 +128,7 @@ def grid_search(layer_types, layer_counts, neuron_counts, loss_functions):
 def main():
     # Set hyperparameters for Grid Search
     layer_types = ['linear', 'relu']
-    layer_counts = [1, 2, 3]
+    layer_counts = [0, 1, 2, 3]
     neuron_counts = [2, 4, 8, 16, 32, 64, 128, 256]
     loss_functions = [SparseCategoricalCrossentropy()]
 

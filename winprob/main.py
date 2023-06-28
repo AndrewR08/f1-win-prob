@@ -8,7 +8,7 @@ def main():
     cache(True)
 
     # used for development, whether to display ui or use hard-coded values
-    ui = True
+    ui = False
     if ui:
         # Display year options menu
         year_options = {2022: 1, 2023: 2}
@@ -42,12 +42,13 @@ def main():
         # Get user input for track using track dictionary
         race_input = int(input("Select Race (1-" + str(len(r_keys)) + "): "))
         skip_race = race_dict[race_input]
-
-        print()
-        print(year, skip_race)
     else:
         year = 2023
         skip_race = 'Australian_Grand_Prix'
+
+    print()
+    print(year, skip_race)
+    print()
 
     skip_files = [str(year) + '_' + skip_race + '_R.csv', str(year) + '_' + skip_race + '_Q.csv']
 
@@ -67,19 +68,23 @@ def main():
     predicted = predict(year, skip_race)
 
     # plotting functions
-    plot_positions(year, skip_race, drivers=[])
-    plot_single_prob(year, skip_race, predicted, prob_lap=8)
-    plot_probs(year, skip_race, predicted)
+    #plot_positions(year, skip_race, drivers=[])
+    #plot_single_prob(year, skip_race, predicted, prob_lap=8)
+    #plot_probs(year, skip_race, predicted)
+
+    plot_pos_and_probs(year, skip_race, X_final, predicted)
 
     """
     -- TO DO --
     For each test race, please provide a visual showing the actual position of each driver and their probability of 
     winning for each lap. Maybe the height of a line indicates the driver's position, and the width of the line could 
-    represent the probability.
+    represent the probability. -> could create subplot w/ existing positions plot (filtered to pred laps) & plot probs
 
     Across all laps of all test races, please aggregate the predicted probabilities to see how well they match win 
     probabilities. For example, for how many driver-laps did the model output 95-100% win probability, and what 
-    percentage of the time did the driver actually win? Then repeat for 90-94.9, 85-89.9, etc. """
+    percentage of the time did the driver actually win? Then repeat for 90-94.9, 85-89.9, etc. --> need to save 
+    predicted probs and aggregate
+    """
 
 
 if __name__ == '__main__':
