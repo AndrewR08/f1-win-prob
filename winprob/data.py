@@ -352,16 +352,20 @@ def plot_probs(year, track_name, predictions):
     plt.xlabel("Lap Number")
     plt.ylabel("Win Probability")
     plt.savefig('images/' + str(year) + "_" + track_name + "_Predictions.png")
-    plt.show()
+    #plt.show()
 
 
-def plot_pos_and_probs(year, track_name, X_final, predictions):
+def plot_pos_and_probs(year, track_name, predictions):
     ff1.plotting.setup_mpl()
 
     q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    r_file = 'data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
     qdf = pd.read_csv(q_file)
+    df = pd.read_csv(r_file)
 
-    # Remove the first column
+    # Create dataset and remove the first column
+    X, y, y_win = create_dataset(df, qdf)
+    X_final = np.array(X)
     positions = np.transpose(X_final[:len(predictions), 1:])
 
     # create a matplotlib figure
@@ -413,4 +417,4 @@ def plot_pos_and_probs(year, track_name, X_final, predictions):
 
     fig.suptitle(str(year) + " " + track_name.replace("_", " "))
     plt.savefig('images/' + str(year) + "_" + track_name + "_Probabilities_Predictions.png")
-    plt.show()
+    #plt.show()

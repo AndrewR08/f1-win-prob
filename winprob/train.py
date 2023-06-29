@@ -27,7 +27,7 @@ def train(model_name, X_final, y_final, yw_final):
     early_stopping = EarlyStopping(monitor='val_loss', patience=patience, verbose=1)
 
     model_checkpoint = ModelCheckpoint('best_models/' + model_name + '.h5', monitor='val_loss', mode='min',
-                                       verbose=1,
+                                       verbose=0,
                                        save_best_only=True)
 
     # clear previous model training data to ensure best model outcomes
@@ -35,7 +35,7 @@ def train(model_name, X_final, y_final, yw_final):
 
     # define sequential model with input layer and softmax Dense output layer
     model = Sequential()
-    model.add(Input(shape=(X_train.shape[0], X_train.shape[1])))
+    model.add(Input(shape=(None, X_train.shape[1])))
     model.add(Dense(units=X_train.shape[1] - 1, activation='softmax'))
 
     # compile model
