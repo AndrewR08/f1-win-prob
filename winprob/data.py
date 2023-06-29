@@ -418,3 +418,23 @@ def plot_pos_and_probs(year, track_name, predictions):
     fig.suptitle(str(year) + " " + track_name.replace("_", " "))
     plt.savefig('images/' + str(year) + "_" + track_name + "_Probabilities_Predictions.png")
     #plt.show()
+
+
+def combine_pred_arrays(pred_dir):
+    pred_files = os.listdir(pred_dir)
+
+    arrays = []
+    for fn in pred_files:
+        if fn.endswith('.npy'):
+            pf = os.path.join(pred_dir, fn)
+            pred = np.load(pf)
+            arrays.append(pred)
+
+    combined = np.concatenate(arrays, axis=0)
+    print(combined)
+    print(combined.shape)
+    np.save('predictions/2023/combined/combined_preds.npy', combined)
+    np.savetxt('predictions/2023/combined/combined_preds.csv', combined, delimiter=',')
+
+
+

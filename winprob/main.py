@@ -4,7 +4,7 @@ from predict import *
 
 
 def main():
-    acc = 0
+    acc = 1
     while acc < 0.85:
         # location of cache for fastf1 - True for pc, False for mac
         cache(True)
@@ -82,6 +82,7 @@ def main():
         percentage of the time did the driver actually win? Then repeat for 90-94.9, 85-89.9, etc. --> need to save 
         predicted probs and aggregate
         """
+    combine_pred_arrays("predictions/2023")
 
 
 if __name__ == '__main__':
