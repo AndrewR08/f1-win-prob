@@ -37,10 +37,10 @@ def run(layers, loss_function, optimizer, batch_size, epochs, patience=15):
           f"Epochs: {epochs}")
 
     # Setup path for artifacts
-    output_path = 'best_models/gridsearch.h5'
+    output_path = '../best_models/gridsearch.h5'
 
-    races_dir = "data/2022/race/"
-    quali_dir = "data/2022/quali/"
+    races_dir = "../data/2022/race/"
+    quali_dir = "../data/2022/quali/"
 
     X_final, y_final, yw_final = create_mult_dataset(races_dir, quali_dir)
     X_train, X_test, y_train, y_test = train_test_split(X_final, y_final, test_size=0.2, random_state=8)
@@ -78,7 +78,7 @@ def run(layers, loss_function, optimizer, batch_size, epochs, patience=15):
 
     # Write result to gs_results csv
     csv_result = f"{layers_str},{loss_function_name},{batch_size},{epochs},{number_of_epochs_ran},{val_loss}\n"
-    file1 = open('gs_results/results_gs1.csv', 'a+')
+    file1 = open('../gs_results/results_gs1.csv', 'a+')
     file1.write(csv_result)
     file1.close()
     print("Results appended.\n")

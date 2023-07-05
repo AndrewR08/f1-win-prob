@@ -26,7 +26,7 @@ def train(model_name, X_final, y_final, yw_final):
     patience = 15
     early_stopping = EarlyStopping(monitor='val_loss', patience=patience, verbose=1)
 
-    model_checkpoint = ModelCheckpoint('best_models/' + model_name + '.h5', monitor='val_loss', mode='min',
+    model_checkpoint = ModelCheckpoint('../best_models/' + model_name + '.h5', monitor='val_loss', mode='min',
                                        verbose=0,
                                        save_best_only=True)
 
@@ -58,7 +58,7 @@ def train(model_name, X_final, y_final, yw_final):
               callbacks=[model_checkpoint, early_stopping],
               verbose=0)
 
-    model_path = 'best_models/' + model_name + '.h5'
+    model_path = '../best_models/' + model_name + '.h5'
     best_model = load(model_path)
 
     # ability to evaluate model with validation data and when always predicting leader to win

@@ -52,20 +52,20 @@ def main():
 
     skip_files = [str(year) + '_' + skip_race + '_R.csv', str(year) + '_' + skip_race + '_Q.csv']
 
-    races_dir = "data/" + str(year) + "/race/"
-    quali_dir = "data/" + str(year) + "/quali/"
+    races_dir = "../data/" + str(year) + "/race/"
+    quali_dir = "../data/" + str(year) + "/quali/"
 
     X_final, y_final, yw_final = create_mult_dataset(races_dir, quali_dir, skip_files)
 
     model_name = str(year) + "races" + "_no_" + skip_race
-    model_path = 'best_models/' + model_name + '.h5'
+    model_path = '../best_models/' + model_name + '.h5'
 
     # Check if model for race already exists, if not train new model
     if not load(model_path):
         train(model_name, X_final, y_final, yw_final)
 
     # Call predict function to use trained model to make win prob results
-    predicted, acc = predict(year, skip_race, ui)
+    predicted = predict(year, skip_race, ui)
 
     # plotting functions
     plot_positions(year, skip_race, drivers=[])

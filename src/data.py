@@ -54,7 +54,7 @@ def get_race(year, track, fn, skip_list):
                         datetime.strptime(row, '%M:%S.%f').minute * 60)
         df_laps = df_laps.astype({'lap': 'int32', 'position': 'int32'})
 
-        df_laps.to_csv('data/' + str(year) + '/race/' + fn, index=False)
+        df_laps.to_csv('../data/' + str(year) + '/race/' + fn, index=False)
     except KeyError:
         skip_list.append(track)
 
@@ -73,14 +73,7 @@ def get_quali(year, track, fn):
         df.rename(columns={'Driver.driverId': 'driver'}, inplace=True)
         df.fillna(0, inplace=True)
         df = df.astype({'position': 'int32'})
-
-        """outliers = ['de_vries', 'hulkenberg']
-        if outliers[0] in df['drivers'].unique():
-            df = df[df['drivers'] != outliers[0]]
-        elif outliers[1] in df['drivers'].unique():
-            df = df[df['drivers'] != outliers[1]]"""
-
-        df.to_csv('data/' + str(year) + '/quali/' + fn, index=False)
+        df.to_csv('../data/' + str(year) + '/quali/' + fn, index=False)
 
     except IndexError:
         pass
@@ -99,13 +92,6 @@ def create_dataset(df, q_df):
     # laps = 1
     for i in range(0, laps + 1):
         x1 = [None] * (len(sorted_drivers) + 1)
-        """if i == 0:
-            drivers = sorted(q_df['driver'].tolist())
-        else:
-            drivers = sorted(df['driver'].loc[df['lap'] == (i + 1)].tolist())
-
-        if len(drivers) < len(sorted_drivers):
-            missing = sorted(list(set(sorted_drivers) - set(drivers)))"""
 
         x1[0] = laps - i
         for d in sorted_drivers:
@@ -208,8 +194,8 @@ def create_mult_dataset(races_dir, quali_dir, skip_files=None):
 def plot_positions(year, track_name, drivers=None):
     ff1.plotting.setup_mpl()
 
-    r_file = 'data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
-    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    r_file = '../data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
+    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
     df = pd.read_csv(r_file)
     qdf = pd.read_csv(q_file)
 
@@ -218,7 +204,7 @@ def plot_positions(year, track_name, drivers=None):
     ax = fig.add_subplot()
 
     if drivers is None or drivers == []:
-        drivers = list(qdf.driver.unique())
+        drivers = sorted(list(qdf.driver.unique()))
 
     min_y = []
     max_y = []
@@ -227,10 +213,20 @@ def plot_positions(year, track_name, drivers=None):
         y = qdf['position'].loc[qdf['driver'] == d].tolist()
         x = x + df['lap'].loc[df['driver'] == d].tolist()
         y = y + df['position'].loc[df['driver'] == d].tolist()
+        if year == 2022:
+            if d == 'alonso':
+                d = 'gasly'
+            elif d == 'gasly':
+                d = 'de_vries'
+            elif d == 'latifi':
+                d = 'sargeant'
+            elif d == 'mick_schumacher':
+                d = 'hulkenberg'
+            elif d == 'ricciardo':
+                d = 'piastri'
+            elif d == 'vettel':
+                d = 'alonso'
         if len(x) == 0 and len(y) == 0:
-            # need to fix drivers who crash on lap 1 not showing up -- single point
-            # can compare quali vs race drivers list to get drivers who crash on lap 1 and then skip those in initial
-            # plot, append to skip list and then go through skip list after others have been plotted (maybe?)
             ax.scatter(x, y, marker='s', color=plotting.driver_color(d), label=d)
         else:
             ax.plot(x, y, color=plotting.driver_color(d), label=d)
@@ -250,14 +246,14 @@ def plot_positions(year, track_name, drivers=None):
     plt.title(str(year) + " " + track_name.replace("_", " "))
     plt.xlabel("Lap")
     plt.ylabel("Position")
-    plt.savefig('images/' + str(year) + "_" + track_name + "_Positions.png")
+    plt.savefig('../images/' + str(year) + "_" + track_name + "_Positions.png")
     plt.close()
 
 
 def plot_single_prob(year, track_name, predictions, prob_lap):
     ff1.plotting.setup_mpl()
 
-    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
     qdf = pd.read_csv(q_file)
 
     # create a matplotlib figure
@@ -293,16 +289,15 @@ def plot_single_prob(year, track_name, predictions, prob_lap):
     plt.xticks(range(len(drivers)), drivers, rotation='vertical')
     plt.xlabel("Driver")
     plt.ylabel("Win Probability")
-    # plt.ylim(0, 0.5)
     plt.tight_layout()
-    plt.savefig('images/' + str(year) + "_" + track_name + "_Prediction_L" + str(prob_lap) + ".png")
+    plt.savefig('../images/' + str(year) + "_" + track_name + "_Prediction_L" + str(prob_lap) + ".png")
     plt.close()
 
 
 def plot_probs(year, track_name, predictions):
     ff1.plotting.setup_mpl()
 
-    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
     qdf = pd.read_csv(q_file)
 
     # create a matplotlib figure
@@ -340,15 +335,15 @@ def plot_probs(year, track_name, predictions):
     plt.title(str(year) + " " + track_name.replace("_", " "))
     plt.xlabel("Lap Number")
     plt.ylabel("Win Probability")
-    plt.savefig('images/' + str(year) + "_" + track_name + "_Predictions.png")
+    plt.savefig('../images/' + str(year) + "_" + track_name + "_Predictions.png")
     plt.close()
 
 
 def plot_pos_and_probs(year, track_name, predictions):
     ff1.plotting.setup_mpl()
 
-    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
-    r_file = 'data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
+    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    r_file = '../data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
     qdf = pd.read_csv(q_file)
     df = pd.read_csv(r_file)
 
@@ -405,7 +400,7 @@ def plot_pos_and_probs(year, track_name, predictions):
     ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
     fig.suptitle(str(year) + " " + track_name.replace("_", " "))
-    plt.savefig('images/' + str(year) + "_" + track_name + "_Probabilities_Predictions.png")
+    plt.savefig('../images/' + str(year) + "_" + track_name + "_Probabilities_Predictions.png")
     plt.show()
 
 
@@ -417,12 +412,12 @@ def combine_pred_arrays(pred_dir):
         if fn.endswith('.npy'):
             pf = os.path.join(pred_dir, fn)
             pred = np.load(pf)
-            np.savetxt('results/2023/csv/' + str(fn) + '.csv', pred, delimiter=',')
+            np.savetxt('../results/2023/csv/' + str(fn) + '.csv', pred, delimiter=',')
             arrays.append(pred)
 
     combined = np.concatenate(arrays, axis=0)
-    np.save('results/2023/combined/combined_preds.npy', combined)
-    np.savetxt('results/2023/combined/combined_preds.csv', combined, delimiter=',')
+    np.save('../results/2023/combined/combined_preds.npy', combined)
+    np.savetxt('../results/2023/combined/combined_preds.csv', combined, delimiter=',')
 
 
 
