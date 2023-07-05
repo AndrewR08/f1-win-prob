@@ -47,7 +47,10 @@ def predict(year, skip_race, ui):
 
         # call model.predict to return win probabilities for the number of input laps, save np array
         predicted = pred_model.predict(Xp[pred_laps[0]-1:pred_laps[1]])
-        pred_filepath = 'predictions/' + str(year) + '/' + str(skip_race) + '.npy'
+        pred_filepath = 'results/' + str(year) + '/' + str(skip_race) + '_Predictions.npy'
         np.save(pred_filepath, predicted)
+
+        act_filepath = 'results/' + str(year) + '/' + str(skip_race) + '_Actual.npy'
+        np.save(act_filepath, yp_win[pred_laps[0]-1:pred_laps[1]])
 
         return predicted, acc[1]

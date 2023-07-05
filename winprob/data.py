@@ -10,19 +10,6 @@ import os
 warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.mode.chained_assignment = None  # default='warn'
 
-lap_dict = {'Abu_Dhabi_Grand_Prix': 5554, 'Australian_Grand_Prix': 5303,
-            'Austrian_Grand_Prix': 4318, 'Azerbaijan': 6003, 'Bahrain_Grand_Prix': 5412, 'Belgian_Grand_Prix': 7004,
-            'Brazilian_Grand_Prix': 4309, 'British_Grand_Prix': 5891, 'Canadian_Grand_Prix': 4361,
-            'Dutch_Grand_Prix': 4259, 'Emilia_Romagna_Grand_Prix': 4909, 'French_Grand_Prix': 5842,
-            'Hungarian_Grand_Prix': 4381, 'Italian_Grand_Prix': 5793, 'Japanese_Grand_Prix': 5807,
-            'Mexico_City_Grand_Prix': 4304, 'Miami_Grand_Prix': 5410, 'Monaco_Grand_Prix': 3337,
-            'Saudi_Arabian_Grand_Prix': 6175, 'Singapore_Grand_Prix': 5063,
-            'Spanish_Grand_Prix': 4655, 'United_States_Grand_Prix': 5513}
-
-drivers_dict = {1: 'VER', 3: 'RIC', 4: 'NOR', 5: 'VET', 6: 'LAT', 10: 'GAS', 11: 'PER', 14: 'ALO', 16: 'LEC', 18: 'STR',
-                20: 'MAG', 22: 'TSU', 23: 'ALB', 24: 'ZHO', 31: 'OCO', 44: 'HAM', 47: 'MSC', 55: 'SAI', 63: 'RUS',
-                77: 'BOT'}
-
 
 # function to determine cache location of fastf1 data
 # - pc: True = Desktop, False = Mac
@@ -264,6 +251,7 @@ def plot_positions(year, track_name, drivers=None):
     plt.xlabel("Lap")
     plt.ylabel("Position")
     plt.savefig('images/' + str(year) + "_" + track_name + "_Positions.png")
+    plt.close()
 
 
 def plot_single_prob(year, track_name, predictions, prob_lap):
@@ -308,6 +296,7 @@ def plot_single_prob(year, track_name, predictions, prob_lap):
     # plt.ylim(0, 0.5)
     plt.tight_layout()
     plt.savefig('images/' + str(year) + "_" + track_name + "_Prediction_L" + str(prob_lap) + ".png")
+    plt.close()
 
 
 def plot_probs(year, track_name, predictions):
@@ -352,7 +341,7 @@ def plot_probs(year, track_name, predictions):
     plt.xlabel("Lap Number")
     plt.ylabel("Win Probability")
     plt.savefig('images/' + str(year) + "_" + track_name + "_Predictions.png")
-    #plt.show()
+    plt.close()
 
 
 def plot_pos_and_probs(year, track_name, predictions):
@@ -417,7 +406,7 @@ def plot_pos_and_probs(year, track_name, predictions):
 
     fig.suptitle(str(year) + " " + track_name.replace("_", " "))
     plt.savefig('images/' + str(year) + "_" + track_name + "_Probabilities_Predictions.png")
-    #plt.show()
+    plt.show()
 
 
 def combine_pred_arrays(pred_dir):
@@ -428,13 +417,13 @@ def combine_pred_arrays(pred_dir):
         if fn.endswith('.npy'):
             pf = os.path.join(pred_dir, fn)
             pred = np.load(pf)
+            np.savetxt('results/2023/csv/' + str(fn) + '.csv', pred, delimiter=',')
             arrays.append(pred)
 
     combined = np.concatenate(arrays, axis=0)
-    print(combined)
-    print(combined.shape)
-    np.save('predictions/2023/combined/combined_preds.npy', combined)
-    np.savetxt('predictions/2023/combined/combined_preds.csv', combined, delimiter=',')
+    np.save('results/2023/combined/combined_preds.npy', combined)
+    np.savetxt('results/2023/combined/combined_preds.csv', combined, delimiter=',')
+
 
 
 
