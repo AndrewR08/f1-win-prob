@@ -44,7 +44,7 @@ def main():
         skip_race = race_dict[race_input]
     else:
         year = 2023
-        skip_race = 'Azerbaijan_Grand_Prix'
+        skip_race = 'Spanish_Grand_Prix'
 
     print()
     print(year, skip_race)
