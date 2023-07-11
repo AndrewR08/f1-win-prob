@@ -39,7 +39,7 @@ def get_schedule(year):
 
 
 def get_race(year, track, fn, skip_list):
-    raw_data = pd.read_json(f'http://ergast.com/api/f1/' + str(year) + '/' + str(track) + '/laps/0.json?limit=1000')
+    raw_data = pd.read_json(f'http://ergast.com/api/f1/' + str(year) + '/' + str(track) + '/laps/0.json?limit=10000')
 
     try:
         df = pd.json_normalize(raw_data['MRData']['RaceTable']['Races'])
@@ -400,8 +400,9 @@ def plot_pos_and_probs(year, track_name, predictions):
     ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
     fig.suptitle(str(year) + " " + track_name.replace("_", " "))
-    plt.savefig('../images/' + str(year) + "_" + track_name + "_Probabilities_Predictions.png")
-    plt.show()
+    plt.savefig('../images/' + str(year) + "_" + track_name + "_Probabilities_Predictions_" + str(len(predictions[0])) +
+                "_Laps.png")
+    #plt.show()
 
 
 def combine_pred_arrays(pred_dir):
