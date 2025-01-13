@@ -16,29 +16,33 @@ pd.options.mode.chained_assignment = None  # default='warn'
 def cache(pc):
     if pc:
         # location of cache for pc
-        ff1.Cache.enable_cache('D:/f1data')
+        ff1.Cache.enable_cache('G:/f1data')
     else:
         # location of cache for mac
         ff1.Cache.enable_cache('/Users/andrewreeves/Documents/ASU/fastf1')
-
 
 def format_circuits(circuit):
     if isinstance(circuit, str):
         circuit = circuit.replace(' ', '_')
     return circuit
 
-
 def get_schedule(year):
     schedule = ff1.get_event_schedule(year)
     schedule = schedule[schedule['EventFormat'] != 'testing']
-    circuits = schedule.EventName
-    circuits = circuits.apply(format_circuits).reset_index(drop=True)
-    circuits = circuits.to_dict()
-    circuits = {k + 1: v for k, v in circuits.items()}
-    return circuits
+    schedule = schedule[['EventName', 'EventDate']]
+    schedule_dict = schedule.to_dict(orient='index')
+    schedule_dict = {k-1 : v for k, v in schedule_dict.items()}
+    return schedule_dict
 
+def get_valid_races(schedule, date):
+    past_races = {
+        k: v['EventName'] 
+        for k, v in schedule.items() 
+        if v['EventDate'] < date
+    }
+    return past_races
 
-def get_race(year, track, fn, skip_list):
+def get_race(year, track, fn):
     raw_data = pd.read_json(f'http://ergast.com/api/f1/' + str(year) + '/' + str(track) + '/laps/0.json?limit=10000')
 
     try:
@@ -54,11 +58,9 @@ def get_race(year, track, fn, skip_list):
                         datetime.strptime(row, '%M:%S.%f').minute * 60)
         df_laps = df_laps.astype({'lap': 'int32', 'position': 'int32'})
 
-        df_laps.to_csv('../data/' + str(year) + '/race/' + fn, index=False)
+        df_laps.to_csv(fn, index=False)
     except KeyError:
-        skip_list.append(track)
-
-    return skip_list
+        pass
 
 
 def get_quali(year, track, fn):
@@ -73,8 +75,8 @@ def get_quali(year, track, fn):
         df.rename(columns={'Driver.driverId': 'driver'}, inplace=True)
         df.fillna(0, inplace=True)
         df = df.astype({'position': 'int32'})
-        df.to_csv('../data/' + str(year) + '/quali/' + fn, index=False)
-
+        
+        df.to_csv(fn, index=False)
     except IndexError:
         pass
 
@@ -131,15 +133,23 @@ def create_dataset(df, q_df):
     return X, y, y_win
 
 
-def get_all_races(year, race_dict):
-    not_raced = []
-    for t_num, t in race_dict.items():
-        rf = str(year) + '_' + str(t) + '_R.csv'
-        qf = str(year) + '_' + str(t) + '_Q.csv'
-        not_raced = get_race(year, t_num, not_raced, rf)
-        get_quali(year, t_num, qf)
-    return not_raced
+def get_all_race_data(year, race_dict, data_dir='data'):
+    race_dir = os.path.join('data', str(year), 'race')
+    quali_dir = os.path.join('data', str(year), 'quali')
+    os.makedirs(race_dir, exist_ok=True)
+    os.makedirs(quali_dir, exist_ok=True)
 
+    races = race_dict.get(year, {})
+    for track_num, track in races.items():
+        race_filepath = os.path.join(data_dir, str(year), 'race', f"{year}_{track}_R.csv")
+        quali_filepath = os.path.join(data_dir, str(year), 'quali', f"{year}_{track}_Q.csv")
+        if not os.path.isfile(race_filepath):
+            print(f"Processing RACE for {track} ({year})")
+            get_race(year, track_num, race_filepath)
+        
+        if not os.path.isfile(quali_filepath):
+            print(f"Processing QUALIFYING for {track} ({year})")
+            get_quali(year, track_num, quali_filepath)
 
 def combine_csv(csvs_dir, out_dir):
     csv_files = os.listdir(csvs_dir)
@@ -158,9 +168,14 @@ def create_mult_dataset(races_dir, quali_dir, skip_files=None):
     else:
         pass
 
-    r_files = os.listdir(races_dir)
-    q_files = os.listdir(quali_dir)
-
+    try:
+        r_files = os.listdir(races_dir)
+        q_files = os.listdir(quali_dir)
+    except FileNotFoundError:
+        print(f"Directory not found, making new paths: \n {races_dir} \n {quali_dir}")
+        os.makedirs(races_dir)
+        os.makedirs(quali_dir)
+    
     X_all = []
     y_all = []
     yw_all = []
@@ -194,8 +209,8 @@ def create_mult_dataset(races_dir, quali_dir, skip_files=None):
 def plot_positions(year, track_name, drivers=None):
     ff1.plotting.setup_mpl()
 
-    r_file = '../data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
-    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    r_file = 'data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
     df = pd.read_csv(r_file)
     qdf = pd.read_csv(q_file)
 
@@ -253,7 +268,7 @@ def plot_positions(year, track_name, drivers=None):
 def plot_single_prob(year, track_name, predictions, prob_lap):
     ff1.plotting.setup_mpl()
 
-    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
     qdf = pd.read_csv(q_file)
 
     # create a matplotlib figure
@@ -297,7 +312,7 @@ def plot_single_prob(year, track_name, predictions, prob_lap):
 def plot_probs(year, track_name, predictions):
     ff1.plotting.setup_mpl()
 
-    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
     qdf = pd.read_csv(q_file)
 
     # create a matplotlib figure
@@ -342,8 +357,8 @@ def plot_probs(year, track_name, predictions):
 def plot_pos_and_probs(year, track_name, predictions):
     ff1.plotting.setup_mpl()
 
-    q_file = '../data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
-    r_file = '../data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
+    q_file = 'data/' + str(year) + '/quali/' + str(year) + "_" + track_name + "_Q.csv"
+    r_file = 'data/' + str(year) + '/race/' + str(year) + "_" + track_name + "_R.csv"
     qdf = pd.read_csv(q_file)
     df = pd.read_csv(r_file)
 

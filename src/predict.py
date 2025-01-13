@@ -2,18 +2,19 @@ from data import *
 from train import load
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 
 def predict(year, skip_race, ui):
     # load race and qualifying csv to create dataset
-    p_df = pd.read_csv('../data/' + str(year) + '/race/' + str(year) + '_' + skip_race + '_R.csv')
-    p_qdf = pd.read_csv('../data/' + str(year) + '/quali/' + str(year) + '_' + skip_race + '_Q.csv')
+    p_df = pd.read_csv('data/' + str(year) + '/race/' + str(year) + '_' + skip_race + '_R.csv')
+    p_qdf = pd.read_csv('data/' + str(year) + '/quali/' + str(year) + '_' + skip_race + '_Q.csv')
 
     # use data.py method to create dataset
     Xp, yp, yp_win = create_dataset(p_df, p_qdf)
 
     # load model from file
-    pred_model = load('../best_models/' + str(year) + 'races_no_' + skip_race + '.h5')
+    pred_model = load('best_models/' + str(year) + 'races_no_' + skip_race + '.h5')
 
     # number of laps to predict with
     # - pred_laps[0] = start lap
@@ -47,10 +48,10 @@ def predict(year, skip_race, ui):
 
         # call model.predict to return win probabilities for the number of input laps, save np array
         predicted = pred_model.predict(Xp[pred_laps[0]-1:pred_laps[1]])
-        pred_filepath = '../results/' + str(year) + '/' + str(skip_race) + '_Predictions.npy'
+        pred_filepath = 'results/' + str(year) + '/' + str(skip_race) + '_Predictions.npy'
         np.save(pred_filepath, predicted)
 
-        act_filepath = '../results/' + str(year) + '/' + str(skip_race) + '_Actual.npy'
+        act_filepath = 'results/' + str(year) + '/' + str(skip_race) + '_Actual.npy'
         np.save(act_filepath, yp_win[pred_laps[0]-1:pred_laps[1]])
 
         return predicted
