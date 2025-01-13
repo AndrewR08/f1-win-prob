@@ -14,6 +14,7 @@ def main():
     schedule_dict = {}
     race_dict = {}
     current_date = datetime(2023, 7, 10)  # Replace with datetime.now()
+    # current_date = datetime.now()  # Replace with datetime.now()
 
     # download files for all valid races
     for year in valid_years:
@@ -73,7 +74,8 @@ def main():
     races_dir = "data/" + str(year) + "/race/"
     quali_dir = "data/" + str(year) + "/quali/"
 
-    X_final, y_final, yw_final = create_mult_dataset(races_dir, quali_dir, skip_files)
+    X_final, y_final, yw_final = create_mult_dataset(race_dict, races_dir, quali_dir, skip_files)
+    print(X_final, y_final, yw_final)
 
     # model_name = str(year) + "races" + "_no_" + skip_race
     # model_path = '../best_models/' + model_name + '.h5'

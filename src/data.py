@@ -84,7 +84,7 @@ def get_quali(year, track, fn):
 def create_dataset(df, q_df):
     drivers = q_df['driver'].unique()
     sorted_drivers = sorted(drivers)
-    # print("in create dataset: ", sorted_drivers)
+    print("in create dataset: ", sorted_drivers)
 
     laps = df['lap'].max()
 
@@ -141,8 +141,9 @@ def get_all_race_data(year, race_dict, data_dir='data'):
 
     races = race_dict.get(year, {})
     for track_num, track in races.items():
-        race_filepath = os.path.join(data_dir, str(year), 'race', f"{year}_{track}_R.csv")
-        quali_filepath = os.path.join(data_dir, str(year), 'quali', f"{year}_{track}_Q.csv")
+        sanitized_track = track.replace(" ", "_")
+        race_filepath = os.path.join(data_dir, str(year), 'race', f"{year}_{sanitized_track}_R.csv")
+        quali_filepath = os.path.join(data_dir, str(year), 'quali', f"{year}_{sanitized_track}_Q.csv")
         if not os.path.isfile(race_filepath):
             print(f"Processing RACE for {track} ({year})")
             get_race(year, track_num, race_filepath)
@@ -161,8 +162,8 @@ def combine_csv(csvs_dir, out_dir):
 
     combined_df.to_csv(out_dir, index=False)
 
-
-def create_mult_dataset(races_dir, quali_dir, skip_files=None):
+# TODO only use valid races from race_dict to add to dataset !!
+def create_mult_dataset(race_dict, races_dir, quali_dir, skip_files=None):
     if skip_files is None:
         skip_files = ['', '']
     else:
@@ -188,6 +189,7 @@ def create_mult_dataset(races_dir, quali_dir, skip_files=None):
                 if qf == skip_files[1]:
                     pass
                 else:
+                    print(quali_dir + qf)
                     q_df = pd.read_csv(quali_dir + qf)
 
             X, y, y_win = create_dataset(df, q_df)
